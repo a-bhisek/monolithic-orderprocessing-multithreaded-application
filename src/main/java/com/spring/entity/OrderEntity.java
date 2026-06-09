@@ -10,6 +10,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -32,13 +34,15 @@ public class OrderEntity {
 	private Integer orderId;
 
 	@NonNull
-	private Integer productId;
-	@NonNull
 	private Integer quantity;
 	@NonNull
 	private Double totalAmount;
 	@Column(length=30)
 	private String status = "PROCESSING";
+	
+	@ManyToOne
+	@JoinColumn(referencedColumnName = "productId")
+	private ProductEntity product;
 	
 	@CreationTimestamp
 	@Column(insertable = true, updatable = false)
