@@ -9,6 +9,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -29,8 +31,7 @@ public class PaymentEntity {
 	@SequenceGenerator(name="gen1",sequenceName = "PAYMENT_SEQ",allocationSize = 1,initialValue = 1001)
 	@GeneratedValue(generator = "gen1",strategy=GenerationType.SEQUENCE)
 	private Integer paymentId;
-	@NonNull
-	private Integer orderId;
+	
 	@NonNull
 	private Double amount;
 	@NonNull
@@ -39,6 +40,11 @@ public class PaymentEntity {
 	@NonNull
 	@Column(length=30)
 	private String paymentMode;
+	
+	@NonNull
+	@OneToOne
+	@JoinColumn(name = "ORDER_ID", referencedColumnName = "orderId")
+	private OrderEntity order;
 	
 	@CreationTimestamp
 	private LocalDateTime paymentTime;

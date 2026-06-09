@@ -41,7 +41,7 @@ public class OrderEntity {
 	private String status = "PROCESSING";
 	
 	@ManyToOne
-	@JoinColumn(referencedColumnName = "productId")
+	@JoinColumn(name = "PRODUCT_ID", referencedColumnName = "productId")
 	private ProductEntity product;
 	
 	@CreationTimestamp
