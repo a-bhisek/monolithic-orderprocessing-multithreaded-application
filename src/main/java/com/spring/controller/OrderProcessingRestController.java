@@ -21,7 +21,7 @@ public class OrderProcessingRestController {
 	private IOrderService orderService;
 
 	@PostMapping("/placeOrder")
-	public ResponseEntity<OrderEntity> placeOrder(@RequestBody OrderEntity order) throws ProductNotAvailableException, ProductOutOfStockException{
+	public ResponseEntity<OrderEntity> placeOrder(@RequestBody OrderEntity order) throws ProductNotAvailableException, ProductOutOfStockException, InterruptedException{
 		OrderEntity order1 = orderService.placeOrder(order);
 		return new ResponseEntity<OrderEntity>(order1,HttpStatus.CREATED);
 	}

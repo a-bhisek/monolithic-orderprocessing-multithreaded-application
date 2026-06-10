@@ -4,12 +4,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.spring.entity.OrderEntity;
+import com.spring.entity.PaymentEntity;
 import com.spring.entity.ProductEntity;
 import com.spring.exceptions.OrderIdNotFoundException;
 import com.spring.exceptions.ProductNotAvailableException;
 import com.spring.exceptions.ProductOutOfStockException;
 import com.spring.repository.OrderRepository;
 import com.spring.repository.ProductRepository;
+import com.spring.threads.EmailThread;
+import com.spring.threads.InventoryThread;
+import com.spring.threads.PaymentThread;
 
 @Service
 public class OrderServiceImpl implements IOrderService {
@@ -22,17 +26,39 @@ public class OrderServiceImpl implements IOrderService {
 	
 	@Autowired
 	private IInventoryService inventory;
+	
+	@Autowired
+	private IEmailService emailService;
+	
+	@Autowired
+	private IPaymentService paymentService;
 
 	@Override
 	public OrderEntity placeOrder(OrderEntity order) throws ProductNotAvailableException,
-	                                                        ProductOutOfStockException {
-		inventory.checkStock(order.getProduct().getProductId(), order.getQuantity());
-		inventory.reduceStock(order.getProduct().getProductId(), order.getQuantity());
+	                                                        ProductOutOfStockException, InterruptedException {
+		InventoryThread inventoryThread = new InventoryThread(order, inventory);
+		inventoryThread.start();
+	
 		ProductEntity product = productRepo.findById(order.getProduct().getProductId()).orElseThrow(()-> new ProductNotAvailableException("Invalid Product Id"));;
 		double totalPrice = product.getPrice() * order.getQuantity();
 		order.setTotalAmount(totalPrice);
 		order.setProduct(product);
-		return orderRepo.save(order);
+		EmailThread emailThread = new EmailThread(emailService);
+		emailThread.start();
+		
+		inventoryThread.join();
+		emailThread.join();
+		
+		OrderEntity savedOrder = orderRepo.save(order);
+		
+		PaymentEntity payment = new PaymentEntity(totalPrice, savedOrder.getStatus(), "UPI", savedOrder);
+		PaymentThread paymentThread = new PaymentThread(paymentService, payment);
+		paymentThread.start();
+		
+		
+		paymentThread.join();
+		
+		return savedOrder;
 	}
 
 	@Override
