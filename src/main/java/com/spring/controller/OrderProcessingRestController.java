@@ -1,5 +1,7 @@
 package com.spring.controller;
 
+import java.util.concurrent.ExecutionException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +23,7 @@ public class OrderProcessingRestController {
 	private IOrderService orderService;
 
 	@PostMapping("/placeOrder")
-	public ResponseEntity<OrderEntity> placeOrder(@RequestBody OrderEntity order) throws ProductNotAvailableException, ProductOutOfStockException, InterruptedException{
+	public ResponseEntity<OrderEntity> placeOrder(@RequestBody OrderEntity order) throws ProductNotAvailableException, ProductOutOfStockException, InterruptedException, ExecutionException{
 		OrderEntity order1 = orderService.placeOrder(order);
 		return new ResponseEntity<OrderEntity>(order1,HttpStatus.CREATED);
 	}

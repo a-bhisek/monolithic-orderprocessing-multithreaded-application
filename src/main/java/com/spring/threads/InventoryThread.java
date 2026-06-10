@@ -1,10 +1,12 @@
 package com.spring.threads;
+import java.util.concurrent.Callable;
+
 import com.spring.entity.OrderEntity;
 import com.spring.exceptions.ProductNotAvailableException;
 import com.spring.exceptions.ProductOutOfStockException;
 import com.spring.service.IInventoryService;
 
-public class InventoryThread extends Thread {
+public class InventoryThread implements Callable<Boolean> {
 
 	private IInventoryService inventory;
 	private OrderEntity order;
@@ -13,28 +15,28 @@ public class InventoryThread extends Thread {
 		this.order = order;
 		this.inventory = inventory;
 	}
-	
-	public void run() {
+	@Override
+	public Boolean call() {
 		Thread.currentThread().setName("Inventory Thread");
 		System.out.println(Thread.currentThread().getName() + " started");
+	 	
+		
 		try {
 			Thread.sleep(5000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		try {
-			inventory.checkStock(order.getProduct().getProductId(), order.getQuantity());
+			boolean flag = inventory.checkStock(order.getProduct().getProductId(), order.getQuantity());
+			if(flag) {
+				inventory.reduceStock(order.getProduct().getProductId(), order.getQuantity());
+				return true;
+			}
 		} catch (ProductOutOfStockException e) {
 			e.printStackTrace();
 		} catch (ProductNotAvailableException e) {
 			e.printStackTrace();
 		}
-		try {
-			inventory.reduceStock(order.getProduct().getProductId(), order.getQuantity());
-		} catch (ProductOutOfStockException e) {
-			e.printStackTrace();
-		} catch (ProductNotAvailableException e) {
+		catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		return false;
+		
 	}
 }

@@ -1,5 +1,10 @@
 package com.spring.service;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -35,10 +40,11 @@ public class OrderServiceImpl implements IOrderService {
 
 	@Override
 	public OrderEntity placeOrder(OrderEntity order) throws ProductNotAvailableException,
-	                                                        ProductOutOfStockException, InterruptedException {
+	                                                        ProductOutOfStockException, InterruptedException, ExecutionException {
 		InventoryThread inventoryThread = new InventoryThread(order, inventory);
-		inventoryThread.start();
-	
+		ExecutorService service = Executors.newSingleThreadExecutor();
+		Future<Boolean> f = service.submit(inventoryThread);
+		if(f.get()) {		
 		ProductEntity product = productRepo.findById(order.getProduct().getProductId()).orElseThrow(()-> new ProductNotAvailableException("Invalid Product Id"));;
 		double totalPrice = product.getPrice() * order.getQuantity();
 		order.setTotalAmount(totalPrice);
@@ -46,7 +52,6 @@ public class OrderServiceImpl implements IOrderService {
 		EmailThread emailThread = new EmailThread(emailService);
 		emailThread.start();
 		
-		inventoryThread.join();
 		emailThread.join();
 		
 		OrderEntity savedOrder = orderRepo.save(order);
@@ -57,8 +62,10 @@ public class OrderServiceImpl implements IOrderService {
 		
 		
 		paymentThread.join();
-		
 		return savedOrder;
+		}
+		service.shutdown();
+		 throw new  ProductOutOfStockException("Product Out Of Stock");
 	}
 
 	@Override
